@@ -1,0 +1,24 @@
+<html>
+<head>
+<meta content="text/html" charset="utf-8">
+<style>
+    ul li{
+    list-style-type:none;
+    }
+</style>
+</head>
+
+<body>
+    <form action="/myhome/" method="post">
+    <h1 style="color:olivedrab;">我的主页</h1>
+    {{ range . }}
+        <h3>{{ .Content}}</h3>
+        <h4>评论: </h4>
+        {{ range .Comments }}
+            <h4>{{ .Author}}: {{.Content}}</h4>
+        {{ end }}<br>       
+    {{ end }}
+</body>
+<input type="submit" value="写博客" style="color:peru;font-size:30px" size="35">
+</form>
+</html>

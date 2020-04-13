@@ -1,0 +1,43 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        textarea {
+            width: 400px;
+            height: 200px;
+        }
+    
+        div {
+            width: 250px;
+            display: inline-block;
+        }
+        .abnormal {
+            position: absolute;
+            margin-left: 0px;
+        }
+    
+        #textArea {
+            position: absolute;
+        }
+    
+        .abnormal div {
+            color: darkgrey;
+            position: absolute;
+        }
+        </style>
+</head>
+<body>
+<form action="/post/" method="post">
+<div class="abnormal">
+    <textarea id="textArea" name="content" style="font-size:15px" onfocus="document.getElementById('introTxt').style.display='none'"
+                onblur="if(value=='')document.getElementById('introTxt').style.display='inline'"></textarea>
+    <!--代码此处千万不要强迫症发作——按回车键！！！不然就会在文本框内自动保留空格-->
+    <div id="introTxt" onclick="focusTextarea()">请输入:</div>
+</div>
+<br><br><br><br><br><br><br><br><br>
+<input type="submit" value="发布" style="color:peru;font-size:20px" size="25">
+
+</form>
+</body>
+</html>
