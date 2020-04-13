@@ -25,7 +25,8 @@ func (c *Controler) InitControler() {
 	c.HandlerMap["/"] = homePage
 	c.HandlerMap["/myhome/"] = myHomePage
 	c.HandlerMap["/post/"] = createPost
-	c.HandlerMap["/test/"] = test
+	c.HandlerMap["/singup/"] = singUP
+	c.HandlerMap["/login/"] = login
 }
 
 func (c *Controler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -37,6 +38,44 @@ func (c *Controler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func singUP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		t, err := template.ParseFiles("template/singup.html")
+		util.CheckErr(err)
+		t.Execute(w, nil)
+	} else if r.Method == "POST" {
+		name := r.PostForm.Get("username")
+		pwd := r.PostForm.Get("password")
+		email := r.PostForm.Get("email")
+		user := db.User{}
+		user.Name = name
+		user.Pwd = pwd
+		user.Email = email
+		user.ID = util.MD5Code(name + pwd)
+		user.Create()
+		w.Header().Set("Location", "http://localhost:8080/login/")
+		w.WriteHeader(302)
+	}
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		t, err := template.ParseFiles("template/login.html")
+		util.CheckErr(err)
+		t.Execute(w, nil)
+	} else if r.Method == "POST" {
+		name := r.PostForm.Get("username")
+		pwd := r.PostForm.Get("password")
+		if db.CheckPWD(name, pwd) == true {
+			w.Header().Set("Location", "http://localhost:8080/myhome/")
+			w.WriteHeader(302)
+		} else {
+			t, err := template.ParseFiles("template/login.html")
+			util.CheckErr(err)
+			t.Execute(w, "密码错误")
+		}
+	}
+}
 func homePage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		t, err := template.ParseFiles("template/home.html")
@@ -52,10 +91,23 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 func myHomePage(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		t, err := template.ParseFiles("template/myhome.html")
-		util.CheckErr(err)
-		posts := db.GetPostByAuthor("duyi")
-		t.Execute(w, posts)
+		cookie := r.Header["Cookie"]
+		if len(cookie) != 0 {
+			user := db.GetUser(cookie[0])
+			if user.ID != "" {
+				t, err := template.ParseFiles("template/myhome.html")
+				util.CheckErr(err)
+				posts := db.GetPostByAuthor(user.Name)
+				t.Execute(w, posts)
+			} else {
+				w.Header().Set("Location", "http://localhost:8080/login/")
+				w.WriteHeader(302)
+			}
+		} else {
+			w.Header().Set("Location", "http://localhost:8080/login/")
+			w.WriteHeader(302)
+		}
+
 	} else if r.Method == "POST" {
 		w.Header().Set("Location", "http://localhost:8080/post/")
 		w.WriteHeader(302)
@@ -64,21 +116,6 @@ func myHomePage(w http.ResponseWriter, r *http.Request) {
 
 func notFound(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "404 not found")
-}
-
-func postsFmt(posts []db.Post) string {
-	var reply string
-	for _, post := range posts {
-		reply += fmt.Sprintf("时间: %s 作者: %s\n%s\n", post.Time, post.Author, post.Content)
-		for i, comment := range post.Comments {
-			if i == 0 {
-				reply += "评论:\n"
-			}
-			reply += fmt.Sprintf("%s: %s\n", comment.Author, comment.Content)
-		}
-		reply += "\n"
-	}
-	return reply
 }
 
 func getPostByID(w http.ResponseWriter, r *http.Request) {

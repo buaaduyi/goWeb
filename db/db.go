@@ -10,6 +10,14 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// User content the user information
+type User struct {
+	ID    string
+	Name  string
+	Pwd   string
+	Email string
+}
+
 // DSN data source name
 type DSN struct {
 	User     string
@@ -45,6 +53,15 @@ func InitDB(dsn DSN) {
 	dsnStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dsn.User, dsn.Pwd, dsn.Hostname, dsn.Port, dsn.Schema)
 	db, err = sql.Open("mysql", dsnStr)
 	util.CheckErr(err)
+}
+
+// Create user
+func (user *User) Create() {
+	query := fmt.Sprintf("INSERT INTO users (id, name, pwd, email) VALUES ('%s', '%s','%s', '%s')", user.ID, user.Name, user.Pwd, user.Email)
+	_, err := db.Exec(query)
+	if util.CheckErr(err) == true {
+		util.ColorPrintf("New user: "+user.Name, util.Yellow)
+	}
 }
 
 // Create a new post
@@ -112,4 +129,28 @@ func GetPostByAuthor(author string) []Post {
 		posts = append(posts, post)
 	}
 	return posts
+}
+
+// GetUser by id
+func GetUser(id string) User {
+	user := User{}
+	query := fmt.Sprintf("SELECT name, pwd, email from users where id='%s'", id)
+	err := db.QueryRow(query).Scan(&user.Name, &user.Pwd, &user.Email)
+	if util.CheckErr(err) == true {
+		user.ID = id
+		return user
+	}
+	user.ID = ""
+	return user
+}
+
+// CheckPWD is correct?
+func CheckPWD(name string, pwdQ string) bool {
+	var pwd string
+	query := fmt.Sprintf("SELECT pwd from users where name='%s'", name)
+	err := db.QueryRow(query).Scan(&pwd)
+	if util.CheckErr(err) == true && pwd == pwdQ {
+		return true
+	}
+	return false
 }
