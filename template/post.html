@@ -4,8 +4,8 @@
     <title></title>
     <style>
         textarea {
-            width: 400px;
-            height: 200px;
+            width: 500px;
+            height: 300px;
         }
     
         div {
@@ -30,14 +30,14 @@
 <body>
 <form action="/post/" method="post">
 <div class="abnormal">
-    <textarea id="textArea" name="content" style="font-size:15px" onfocus="document.getElementById('introTxt').style.display='none'"
+    <textarea id="textArea" name="content" style="font-size:30px" onfocus="document.getElementById('introTxt').style.display='none'"
                 onblur="if(value=='')document.getElementById('introTxt').style.display='inline'"></textarea>
     <!--代码此处千万不要强迫症发作——按回车键！！！不然就会在文本框内自动保留空格-->
-    <div id="introTxt" onclick="focusTextarea()">请输入:</div>
+    <div id="introTxt" onclick="focusTextarea()" style="font-size:30px">请输入:</div>
 </div>
-<br><br><br><br><br><br><br><br><br>
-<input type="submit" value="发布" style="color:peru;font-size:20px" size="25">
-
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<button type="submit" name="button" value="post" style="color:peru;font-size:25px" size="30">发布</button>
+<button type="submit" name="button" value="back" style="color:peru;font-size:25px;margin-left:365px" size="30">返回</button>
 </form>
 </body>
 </html>

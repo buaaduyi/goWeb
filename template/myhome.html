@@ -5,15 +5,15 @@
 
 <body>
     <form action="/myhome/" method="post">
-    <h1 style="color:olivedrab;">我的主页</h1>
+    <h1 style="color:olivedrab;">我的主页 <button type="submit" name="button" value="create" style="color:peru;font-size:25px;margin-left:30px" size="30">写博客</button>
+    <button type="submit" name="button" value="homepage" style="color:peru;font-size:25px;margin-left:30px" size="30">返回首页</button>
     {{ range . }}
-        <h3>{{ .Content}}</h3>
-        <h4>评论: </h4>
+    <h2>{{ .Content}}<button type="submit" name="button" value={{.ID}} style="color:tomato;font-size:20px;margin-left:30px" size="25">删除</button> 
+        <h3>评论: </h3>
         {{ range .Comments }}
-            <h4>{{ .Author}}: {{.Content}}</h4>
+            <h3>{{ .Author}}: {{.Content}}</h3>
         {{ end }}<br>       
     {{ end }}
 </body>
-<input type="submit" value="写博客" style="color:peru;font-size:30px" size="35">
 </form>
 </html>

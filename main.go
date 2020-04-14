@@ -20,7 +20,7 @@ func main() {
 	mux := controler.Controler{}
 	controler.Init(&mux, d)
 	server := http.Server{
-		Addr:    "localhost:8080",
+		Addr:    "192.168.0.104:8080",
 		Handler: &mux,
 	}
 	util.ColorPrintf("server is ready\n> > > > > > >\n", util.Green)

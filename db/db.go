@@ -41,7 +41,7 @@ type Comment struct {
 	ID      string
 	Content string
 	Author  string
-	Post    *Post
+	PostID  string
 	Time    string
 }
 
@@ -56,12 +56,19 @@ func InitDB(dsn DSN) {
 }
 
 // Create user
-func (user *User) Create() {
-	query := fmt.Sprintf("INSERT INTO users (id, name, pwd, email) VALUES ('%s', '%s','%s', '%s')", user.ID, user.Name, user.Pwd, user.Email)
-	_, err := db.Exec(query)
-	if util.CheckErr(err) == true {
-		util.ColorPrintf("New user: "+user.Name, util.Yellow)
+func (user *User) Create() bool {
+	exist := "0"
+	query := fmt.Sprintf("select 1 from users where name = '%s' limit 1", user.Name)
+	db.QueryRow(query).Scan(&exist)
+	if exist == "0" {
+		query = fmt.Sprintf("INSERT INTO users (id, name, pwd, email) VALUES ('%s', '%s','%s', '%s')", user.ID, user.Name, user.Pwd, user.Email)
+		_, err := db.Exec(query)
+		if util.CheckErr(err) == true {
+			util.ColorPrintf("New user: "+user.Name+"\n", util.Yellow)
+			return true
+		}
 	}
+	return false
 }
 
 // Create a new post
@@ -71,21 +78,65 @@ func (post *Post) Create() {
 	query := fmt.Sprintf("INSERT INTO posts (id, time, content, author) VALUES ('%s', '%s','%s', '%s')", post.ID, post.Time, post.Content, post.Author)
 	_, err := db.Exec(query)
 	if util.CheckErr(err) == true {
-		util.ColorPrintf(post.Author+" post new blog\n", util.Blue)
+		util.ColorPrintf("New: "+post.ID+"\n", util.Blue)
 	}
+}
+
+// DeletePost by id
+func DeletePost(id string) {
+	query := fmt.Sprintf("DELETE FROM posts WHERE id='%s'", id)
+	_, err := db.Exec(query)
+	util.CheckErr(err)
+	DeleteCommentByPostID(id)
+	util.ColorPrintf("delete: "+id+"\n", util.Yellow)
 }
 
 // Create a new comment
 func (comment *Comment) Create() {
-	if comment.Post == nil {
-		fmt.Println("Post not found")
-		return
-	}
 	comment.Time = time.Now().Format("2006-01-02 15:04:05")
 	comment.ID = util.MD5Code(comment.Content + comment.Author + comment.Time)
-	query := fmt.Sprintf("INSERT INTO comments (id, time, content, author, post_id) VALUES ('%s', '%s','%s', '%s', '%s')", comment.ID, comment.Time, comment.Content, comment.Author, comment.Post.ID)
+	query := fmt.Sprintf("INSERT INTO comments (id, time, content, author, post_id) VALUES ('%s', '%s','%s', '%s', '%s')", comment.ID, comment.Time, comment.Content, comment.Author, comment.PostID)
 	_, err := db.Exec(query)
 	util.CheckErr(err)
+}
+
+//DeleteComment by id
+func DeleteComment(id string) {
+	query := fmt.Sprintf("DELETE FROM comments WHERE id='%s'", id)
+	_, err := db.Exec(query)
+	util.CheckErr(err)
+}
+
+//DeleteCommentByPostID by post_id
+func DeleteCommentByPostID(postID string) {
+	query := fmt.Sprintf("DELETE FROM comments WHERE post_id='%s'", postID)
+	_, err := db.Exec(query)
+	util.CheckErr(err)
+}
+
+// GetAllPosts get all posts
+func GetAllPosts() []Post {
+	posts := []Post{}
+	query := fmt.Sprintf("SELECT id, time, content, author from posts ORDER BY time DESC")
+	postRows, err := db.Query(query)
+	defer postRows.Close()
+	util.CheckErr(err)
+	for postRows.Next() {
+		post := Post{}
+		post.Comments = []Comment{}
+		postRows.Scan(&post.ID, &post.Time, &post.Content, &post.Author)
+		query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
+		commentRows, err := db.Query(query)
+		defer commentRows.Close()
+		util.CheckErr(err)
+		for commentRows.Next() {
+			comment := Comment{PostID: post.ID}
+			commentRows.Scan(&comment.ID, &comment.Time, &comment.Content, &comment.Author)
+			post.Comments = append(post.Comments, comment)
+		}
+		posts = append(posts, post)
+	}
+	return posts
 }
 
 // GetPostByID get post from database
@@ -99,7 +150,7 @@ func GetPostByID(id string) Post {
 	util.CheckErr(err)
 	defer rows.Close()
 	for rows.Next() {
-		comment := Comment{Post: &post}
+		comment := Comment{PostID: post.ID}
 		rows.Scan(&comment.ID, &comment.Time, &comment.Content, &comment.Author)
 		post.Comments = append(post.Comments, comment)
 	}
@@ -109,7 +160,7 @@ func GetPostByID(id string) Post {
 // GetPostByAuthor get post from database
 func GetPostByAuthor(author string) []Post {
 	posts := []Post{}
-	query := fmt.Sprintf("SELECT id, time, content, author from posts where author='%s'", author)
+	query := fmt.Sprintf("SELECT id, time, content, author from posts where author='%s' ORDER BY time DESC", author)
 	postRows, err := db.Query(query)
 	defer postRows.Close()
 	util.CheckErr(err)
@@ -117,12 +168,12 @@ func GetPostByAuthor(author string) []Post {
 		post := Post{}
 		post.Comments = []Comment{}
 		postRows.Scan(&post.ID, &post.Time, &post.Content, &post.Author)
-		query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s'", post.ID)
+		query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
 		commentRows, err := db.Query(query)
 		defer commentRows.Close()
 		util.CheckErr(err)
 		for commentRows.Next() {
-			comment := Comment{Post: &post}
+			comment := Comment{PostID: post.ID}
 			commentRows.Scan(&comment.ID, &comment.Time, &comment.Content, &comment.Author)
 			post.Comments = append(post.Comments, comment)
 		}
@@ -131,8 +182,8 @@ func GetPostByAuthor(author string) []Post {
 	return posts
 }
 
-// GetUser by id
-func GetUser(id string) User {
+// GetUserByID by id
+func GetUserByID(id string) User {
 	user := User{}
 	query := fmt.Sprintf("SELECT name, pwd, email from users where id='%s'", id)
 	err := db.QueryRow(query).Scan(&user.Name, &user.Pwd, &user.Email)
@@ -144,13 +195,14 @@ func GetUser(id string) User {
 	return user
 }
 
-// CheckPWD is correct?
-func CheckPWD(name string, pwdQ string) bool {
-	var pwd string
-	query := fmt.Sprintf("SELECT pwd from users where name='%s'", name)
-	err := db.QueryRow(query).Scan(&pwd)
-	if util.CheckErr(err) == true && pwd == pwdQ {
-		return true
+// GetUserByName is correct?
+func GetUserByName(name string) User {
+	user := User{}
+	query := fmt.Sprintf("SELECT id, pwd, email from users where name='%s'", name)
+	err := db.QueryRow(query).Scan(&user.ID, &user.Pwd, &user.Email)
+	if util.CheckErr(err) == true {
+		return user
 	}
-	return false
+	user.ID = ""
+	return user
 }

@@ -9,7 +9,7 @@ import (
 // CheckErr check if error occur
 func CheckErr(err error) bool {
 	if err != nil {
-		ColorPrintf(err.Error(), Red)
+		ColorPrintf(err.Error()+"\n", Red)
 		return false
 	}
 	return true
