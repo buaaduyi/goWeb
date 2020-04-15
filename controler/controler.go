@@ -127,13 +127,15 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			cookie := r.Cookies()
 			if len(cookie) != 0 {
 				content := r.PostForm.Get("comment" + choice)
-				user := db.GetUserByID(cookie[0].Value)
-				comment := db.Comment{
-					Author:  user.Name,
-					PostID:  choice,
-					Content: content,
+				if content != "" {
+					user := db.GetUserByID(cookie[0].Value)
+					comment := db.Comment{
+						Author:  user.Name,
+						PostID:  choice,
+						Content: content,
+					}
+					comment.Create()
 				}
-				comment.Create()
 				w.Header().Set("Location", host)
 				w.WriteHeader(302)
 			} else {
