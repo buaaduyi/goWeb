@@ -61,6 +61,7 @@ func Init(mux *Controler) {
 		Port:     confArgs.DBPort,
 		Schema:   confArgs.DBSchema,
 	}
+	util.InitLog()
 	db.InitDB(dsn)
 	mux.InitControler()
 }
@@ -73,6 +74,7 @@ func (c *Controler) InitControler() {
 	c.HandlerMap["/post/"] = createPost
 	c.HandlerMap["/singup/"] = singUP
 	c.HandlerMap["/login/"] = login
+	c.HandlerMap["/image/"] = Image
 }
 
 func (c *Controler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -142,6 +144,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 					Path:     "/",
 				}
 				http.SetCookie(w, &cookie)
+				util.InfoLog(name + " logged in")
 				w.Header().Set("Location", HostAddr+"myhome/")
 				w.WriteHeader(302)
 			} else {
@@ -281,4 +284,19 @@ func test(w http.ResponseWriter, r *http.Request) {
 	// reply := postsFmt(posts)
 	reply := []string{"hello", "world"}
 	t.Execute(w, reply)
+}
+
+// Image upload photo to database
+func Image(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == "GET" {
+		fmt.Println("get>>>")
+		t, _ := template.ParseFiles("template/test.html")
+		t.Execute(w, nil)
+	} else if r.Method == "POST" {
+		fmt.Println("post>>>")
+		r.ParseForm()
+		image := r.PostForm.Get("file")
+		fmt.Println(image)
+	}
 }

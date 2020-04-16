@@ -64,7 +64,7 @@ func (user *User) Create() bool {
 		query = fmt.Sprintf("INSERT INTO users (id, name, pwd, email) VALUES ('%s', '%s','%s', '%s')", user.ID, user.Name, user.Pwd, user.Email)
 		_, err := db.Exec(query)
 		if util.CheckErr(err) == true {
-			util.ColorPrintf("New user: "+user.Name+"\n", util.Yellow)
+			util.InfoLog("New user: " + user.Name)
 			return true
 		}
 	}
@@ -78,7 +78,7 @@ func (post *Post) Create() {
 	query := fmt.Sprintf("INSERT INTO posts (id, time, content, author) VALUES ('%s', '%s','%s', '%s')", post.ID, post.Time, post.Content, post.Author)
 	_, err := db.Exec(query)
 	if util.CheckErr(err) == true {
-		util.ColorPrintf("New: "+post.ID+"\n", util.Blue)
+		util.InfoLog("New post: " + post.ID)
 	}
 }
 
@@ -88,7 +88,7 @@ func DeletePost(id string) {
 	_, err := db.Exec(query)
 	util.CheckErr(err)
 	DeleteCommentByPostID(id)
-	util.ColorPrintf("delete: "+id+"\n", util.Yellow)
+	util.InfoLog("Delete post: " + id)
 }
 
 // Create a new comment

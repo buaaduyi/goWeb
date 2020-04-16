@@ -1,12 +1,5 @@
 package main
 
-import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-)
-
 type configArgs struct {
 	hostinf hostInf
 	dsn     dsn
@@ -24,11 +17,5 @@ type dsn struct {
 }
 
 func main() {
-	jsonFile, _ := os.Open("test.json")
-	defer jsonFile.Close()
-	jsonData, _ := ioutil.ReadAll(jsonFile)
-	var data hostInf
-	json.Unmarshal(jsonData, &data)
-	fmt.Println(data)
 
 }

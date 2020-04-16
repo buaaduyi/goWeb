@@ -3,8 +3,12 @@ package util
 import (
 	"crypto/md5"
 	"fmt"
+	"log"
+	"os"
 	"strconv"
 )
+
+var logger *log.Logger
 
 const (
 	//Red color
@@ -25,7 +29,7 @@ func ColorPrintf(message string, color int) {
 // CheckErr check if error occur
 func CheckErr(err error) bool {
 	if err != nil {
-		ColorPrintf(err.Error()+"\n", Red)
+		ErrorLog(err.Error())
 		return false
 	}
 	return true
@@ -38,4 +42,26 @@ func MD5Code(message string) (key string) {
 		key += strconv.Itoa(int(b[i]))
 	}
 	return
+}
+
+// InitLog func
+func InitLog() {
+	logFile, err := os.OpenFile("serverlog.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if CheckErr(err) == false {
+		logFile.Close()
+		return
+	}
+	logger = log.New(logFile, "INFO ", log.Ldate|log.Ltime)
+}
+
+// InfoLog log info
+func InfoLog(args ...interface{}) {
+	logger.SetPrefix("INFO ")
+	logger.Println(args...)
+}
+
+// ErrorLog log error
+func ErrorLog(args ...interface{}) {
+	logger.SetPrefix("ERROR ")
+	logger.Println(args...)
 }

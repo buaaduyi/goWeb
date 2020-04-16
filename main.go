@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	mux := controler.Controler{}
 	controler.Init(&mux)
 	server := http.Server{
