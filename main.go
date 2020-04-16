@@ -1,28 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"goweb/controler"
-	"goweb/db"
 	"goweb/util"
 	"net/http"
 )
 
 func main() {
 
-	var d db.DSN
-	d.User = "root"
-	d.Pwd = "19960115"
-	d.Hostname = "localhost"
-	d.Port = "3306"
-	d.Schema = "ChitChat"
-	// //////////////////////
-
 	mux := controler.Controler{}
-	controler.Init(&mux, d)
+	controler.Init(&mux)
 	server := http.Server{
-		Addr:    "192.168.0.104:8080",
+		Addr:    controler.HostIP + ":" + controler.HostPort,
 		Handler: &mux,
 	}
-	util.ColorPrintf("server is ready\n> > > > > > >\n", util.Green)
+	message := fmt.Sprintf("Service at %s\n> > > > > > >\n", controler.HostAddr)
+	util.ColorPrintf(message, util.Green)
 	server.ListenAndServe()
 }

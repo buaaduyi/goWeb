@@ -1,24 +1,34 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"net/http"
+	"io/ioutil"
+	"os"
 )
 
-func setCookie(w http.ResponseWriter, r *http.Request) {
-	c := http.Cookie{
-		Name:     "duyi",
-		Value:    "12345678",
-		HttpOnly: true,
-	}
-	http.SetCookie(w, &c)
+type configArgs struct {
+	hostinf hostInf
+	dsn     dsn
 }
-
-func getCookie(w http.ResponseWriter, r *http.Request) {
-	cookie := r.Header["Cookie"]
-	fmt.Println(cookie)
+type hostInf struct {
+	HostIP   string `json:"host_ip"`
+	HostPort string `json:"host_port"`
+}
+type dsn struct {
+	User     string `json:"db_user"`
+	Pwd      string `json:"db_pwd"`
+	Hostname string `json:"db_hostname"`
+	Port     string `json:"db_port"`
+	Schema   string `json:"db_schema"`
 }
 
 func main() {
+	jsonFile, _ := os.Open("test.json")
+	defer jsonFile.Close()
+	jsonData, _ := ioutil.ReadAll(jsonFile)
+	var data hostInf
+	json.Unmarshal(jsonData, &data)
+	fmt.Println(data)
 
 }

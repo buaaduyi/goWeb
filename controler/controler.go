@@ -1,14 +1,47 @@
 package controler
 
 import (
+	"encoding/json"
 	"fmt"
 	"goweb/db"
 	"goweb/util"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"os"
 )
 
-const host = "http://192.168.0.104:8080/"
+// HostAddr http://ip:port/
+var HostAddr string
+
+// HostIP http://ip:port/
+var HostIP string
+
+// HostPort http://ip:port/
+var HostPort string
+
+//ConfigArgs config args
+type ConfigArgs struct {
+	HostIP     string `json:"host_ip"`
+	HostPort   string `json:"host_port"`
+	DBUser     string `json:"db_user"`
+	DBPwd      string `json:"db_pwd"`
+	DBHostname string `json:"db_hostname"`
+	DBPort     string `json:"db_port"`
+	DBSchema   string `json:"db_schema"`
+}
+
+// Config all
+func Config() ConfigArgs {
+	confArgs := ConfigArgs{}
+	configFile, err := os.Open("config.json")
+	util.CheckErr(err)
+	defer configFile.Close()
+	configData, err := ioutil.ReadAll(configFile)
+	util.CheckErr(err)
+	json.Unmarshal(configData, &confArgs)
+	return confArgs
+}
 
 // Controler controle every thing
 type Controler struct {
@@ -16,8 +49,19 @@ type Controler struct {
 }
 
 // Init all
-func Init(mux *Controler, d db.DSN) {
-	db.InitDB(d)
+func Init(mux *Controler) {
+	confArgs := Config()
+	HostIP = confArgs.HostIP
+	HostPort = confArgs.HostPort
+	HostAddr = fmt.Sprintf("http://%s:%s/", confArgs.HostIP, confArgs.HostPort)
+	dsn := db.DSN{
+		User:     confArgs.DBUser,
+		Pwd:      confArgs.DBPwd,
+		Hostname: confArgs.DBHostname,
+		Port:     confArgs.DBPort,
+		Schema:   confArgs.DBSchema,
+	}
+	db.InitDB(dsn)
 	mux.InitControler()
 }
 
@@ -59,7 +103,7 @@ func singUP(w http.ResponseWriter, r *http.Request) {
 				user.Email = email
 				user.ID = util.MD5Code(name + pwd)
 				if user.Create() == true {
-					w.Header().Set("Location", host+"login/")
+					w.Header().Set("Location", HostAddr+"login/")
 					w.WriteHeader(302)
 				} else {
 					t, err := template.ParseFiles("template/singup.html")
@@ -72,7 +116,7 @@ func singUP(w http.ResponseWriter, r *http.Request) {
 				t.Execute(w, "信息缺失")
 			}
 		} else if choice == "cancel" {
-			w.Header().Set("Location", host)
+			w.Header().Set("Location", HostAddr)
 			w.WriteHeader(302)
 		}
 	}
@@ -98,7 +142,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 					Path:     "/",
 				}
 				http.SetCookie(w, &cookie)
-				w.Header().Set("Location", host+"myhome/")
+				w.Header().Set("Location", HostAddr+"myhome/")
 				w.WriteHeader(302)
 			} else {
 				t, err := template.ParseFiles("template/login.html")
@@ -106,7 +150,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 				t.Execute(w, "密码错误")
 			}
 		} else if choice == "singup" {
-			w.Header().Set("Location", host+"singup/")
+			w.Header().Set("Location", HostAddr+"singup/")
 			w.WriteHeader(302)
 		}
 	}
@@ -121,7 +165,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		choice := r.PostForm.Get("button")
 		if choice == "myhome" {
-			w.Header().Set("Location", host+"myhome/")
+			w.Header().Set("Location", HostAddr+"myhome/")
 			w.WriteHeader(302)
 		} else {
 			cookie := r.Cookies()
@@ -136,10 +180,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					}
 					comment.Create()
 				}
-				w.Header().Set("Location", host)
+				w.Header().Set("Location", HostAddr)
 				w.WriteHeader(302)
 			} else {
-				w.Header().Set("Location", host+"login/")
+				w.Header().Set("Location", HostAddr+"login/")
 				w.WriteHeader(302)
 			}
 		}
@@ -157,11 +201,11 @@ func myHomePage(w http.ResponseWriter, r *http.Request) {
 				posts := db.GetPostByAuthor(user.Name)
 				t.Execute(w, posts)
 			} else {
-				w.Header().Set("Location", host+"login/")
+				w.Header().Set("Location", HostAddr+"login/")
 				w.WriteHeader(302)
 			}
 		} else {
-			w.Header().Set("Location", host+"login/")
+			w.Header().Set("Location", HostAddr+"login/")
 			w.WriteHeader(302)
 		}
 
@@ -169,14 +213,14 @@ func myHomePage(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		choice := r.PostForm.Get("button")
 		if choice == "create" {
-			w.Header().Set("Location", host+"post/")
+			w.Header().Set("Location", HostAddr+"post/")
 			w.WriteHeader(302)
 		} else if choice == "homepage" {
-			w.Header().Set("Location", host)
+			w.Header().Set("Location", HostAddr)
 			w.WriteHeader(302)
 		} else {
 			db.DeletePost(choice)
-			w.Header().Set("Location", host+"myhome/")
+			w.Header().Set("Location", HostAddr+"myhome/")
 			w.WriteHeader(302)
 		}
 	}
@@ -218,14 +262,14 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 				post.Author = user.Name
 				post.Content = content
 				post.Create()
-				w.Header().Set("Location", host+"myhome/")
+				w.Header().Set("Location", HostAddr+"myhome/")
 				w.WriteHeader(302)
 			} else {
-				w.Header().Set("Location", host+"login/")
+				w.Header().Set("Location", HostAddr+"login/")
 				w.WriteHeader(302)
 			}
 		} else if choice == "back" {
-			w.Header().Set("Location", host+"myhome/")
+			w.Header().Set("Location", HostAddr+"myhome/")
 			w.WriteHeader(302)
 		}
 	}
