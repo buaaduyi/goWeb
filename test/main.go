@@ -1,21 +1,22 @@
 package main
 
-type configArgs struct {
-	hostinf hostInf
-	dsn     dsn
-}
-type hostInf struct {
-	HostIP   string `json:"host_ip"`
-	HostPort string `json:"host_port"`
-}
-type dsn struct {
-	User     string `json:"db_user"`
-	Pwd      string `json:"db_pwd"`
-	Hostname string `json:"db_hostname"`
-	Port     string `json:"db_port"`
-	Schema   string `json:"db_schema"`
+import (
+	"fmt"
+	"net/http"
+	"text/template"
+)
+
+func test(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		t, _ := template.ParseFiles("template/test.html")
+		t.Execute(w, nil)
+	}
 }
 
 func main() {
-
+	images := http.FileServer(http.Dir("images"))
+	http.Handle("/static/", http.StripPrefix("/static/", images))
+	http.HandleFunc("/", test)
+	fmt.Println("ready")
+	http.ListenAndServe("localhost:8080", nil)
 }

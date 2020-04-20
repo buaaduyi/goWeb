@@ -1,20 +1,20 @@
 package main
 
 import (
-	"fmt"
 	"goweb/controler"
 	"goweb/util"
 	"net/http"
 )
 
 func main() {
-	mux := controler.Controler{}
-	controler.Init(&mux)
+	mux := http.NewServeMux()
+	controler.Init(mux)
 	server := http.Server{
 		Addr:    controler.HostIP + ":" + controler.HostPort,
-		Handler: &mux,
+		Handler: mux,
 	}
-	message := fmt.Sprintf("Service at %s\n> > > > > > >\n", controler.HostAddr)
-	util.ColorPrintf(message, util.Green)
+
+	util.ColorPrintf("Service at: ", util.Green)
+	util.ColorPrintf(controler.HostAddr+"\n", util.Yellow)
 	server.ListenAndServe()
 }

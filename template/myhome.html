@@ -4,11 +4,16 @@
 </head>
 
 <body>
-    <form action="/myhome/" method="post">
+    <form action="/myhome" method="post">
     <h1 style="color:olivedrab;">我的主页 <button type="submit" name="button" value="create" style="color:peru;font-size:25px;margin-left:30px" size="30">写博客</button>
     <button type="submit" name="button" value="homepage" style="color:peru;font-size:25px;margin-left:30px" size="30">返回首页</button>
     {{ range . }}
-    <h2>{{ .Content}}<button type="submit" name="button" value={{.ID}} style="color:tomato;font-size:20px;margin-left:30px" size="25">删除</button> 
+    <h2 style="color:slategrey">{{ .Time }}<h2>{{ .Content}}<button type="submit" name="button" value={{.ID}} style="color:tomato;font-size:20px;margin-left:30px" size="25">删除</button>
+        {{ if .Image}}
+            <p>
+            <img src="http://192.168.0.102:8080/static/{{ .ID}}.jpeg" width="300"/>
+            </p>
+        {{end}}
         <h3>评论: </h3>
         {{ range .Comments }}
             <h3>{{ .Author}}: {{.Content}}</h3>

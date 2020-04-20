@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"goweb/util"
+	"os"
 	"time"
 
 	//
@@ -34,6 +35,7 @@ type Post struct {
 	Author   string
 	Comments []Comment
 	Time     string
+	Image    bool
 }
 
 // Comment store the comment
@@ -75,7 +77,11 @@ func (user *User) Create() bool {
 func (post *Post) Create() {
 	post.Time = time.Now().Format("2006-01-02 15:04:05")
 	post.ID = util.MD5Code(post.Content + post.Author + post.Time)
-	query := fmt.Sprintf("INSERT INTO posts (id, time, content, author) VALUES ('%s', '%s','%s', '%s')", post.ID, post.Time, post.Content, post.Author)
+	image := "N"
+	if post.Image == true {
+		image = "Y"
+	}
+	query := fmt.Sprintf("INSERT INTO posts (id, time, content, image, author) VALUES ('%s', '%s', '%s', '%s', '%s')", post.ID, post.Time, post.Content, image, post.Author)
 	_, err := db.Exec(query)
 	if util.CheckErr(err) == true {
 		util.InfoLog("New post: " + post.ID)
@@ -84,11 +90,20 @@ func (post *Post) Create() {
 
 // DeletePost by id
 func DeletePost(id string) {
-	query := fmt.Sprintf("DELETE FROM posts WHERE id='%s'", id)
+	var imageFlag string
+	query := fmt.Sprintf("SELECT image from posts WHERE id='%s'", id)
+	db.QueryRow(query).Scan(&imageFlag)
+	if imageFlag == "Y" {
+		path := "images/" + id + ".jpeg"
+		err := os.Remove(path)
+		util.ErrorLog(err)
+	}
+	query = fmt.Sprintf("DELETE FROM posts WHERE id='%s'", id)
 	_, err := db.Exec(query)
 	util.CheckErr(err)
 	DeleteCommentByPostID(id)
 	util.InfoLog("Delete post: " + id)
+
 }
 
 // Create a new comment
@@ -117,14 +132,20 @@ func DeleteCommentByPostID(postID string) {
 // GetAllPosts get all posts
 func GetAllPosts() []Post {
 	posts := []Post{}
-	query := fmt.Sprintf("SELECT id, time, content, author from posts ORDER BY time DESC")
+	query := fmt.Sprintf("SELECT id, time, content, image, author from posts ORDER BY time DESC")
 	postRows, err := db.Query(query)
 	defer postRows.Close()
 	util.CheckErr(err)
 	for postRows.Next() {
 		post := Post{}
+		var image string
 		post.Comments = []Comment{}
-		postRows.Scan(&post.ID, &post.Time, &post.Content, &post.Author)
+		postRows.Scan(&post.ID, &post.Time, &post.Content, &image, &post.Author)
+		if image == "Y" {
+			post.Image = true
+		} else {
+			post.Image = false
+		}
 		query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
 		commentRows, err := db.Query(query)
 		defer commentRows.Close()
@@ -143,8 +164,14 @@ func GetAllPosts() []Post {
 func GetPostByID(id string) Post {
 	post := Post{}
 	post.Comments = []Comment{}
-	query := fmt.Sprintf("SELECT id, time, content, author from posts where id='%s'", id)
-	db.QueryRow(query).Scan(&post.ID, &post.Time, &post.Content, &post.Author)
+	var image string
+	query := fmt.Sprintf("SELECT id, time, content, image,  author from posts where id='%s'", id)
+	db.QueryRow(query).Scan(&post.ID, &post.Time, &post.Content, &image, &post.Author)
+	if image == "Y" {
+		post.Image = true
+	} else {
+		post.Image = false
+	}
 	query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s'", id)
 	rows, err := db.Query(query)
 	util.CheckErr(err)
@@ -160,14 +187,20 @@ func GetPostByID(id string) Post {
 // GetPostByAuthor get post from database
 func GetPostByAuthor(author string) []Post {
 	posts := []Post{}
-	query := fmt.Sprintf("SELECT id, time, content, author from posts where author='%s' ORDER BY time DESC", author)
+	query := fmt.Sprintf("SELECT id, time, content, image, author from posts where author='%s' ORDER BY time DESC", author)
 	postRows, err := db.Query(query)
 	defer postRows.Close()
 	util.CheckErr(err)
 	for postRows.Next() {
 		post := Post{}
+		var image string
 		post.Comments = []Comment{}
-		postRows.Scan(&post.ID, &post.Time, &post.Content, &post.Author)
+		postRows.Scan(&post.ID, &post.Time, &post.Content, &image, &post.Author)
+		if image == "Y" {
+			post.Image = true
+		} else {
+			post.Image = false
+		}
 		query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
 		commentRows, err := db.Query(query)
 		defer commentRows.Close()

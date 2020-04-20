@@ -31,7 +31,12 @@
 <form action="/" method="post">
 <h1 style="color:olivedrab;">欢迎来到蛇皮论坛<button type="submit" name="button" value="myhome" style="color:peru;font-size:30px;margin-left:30px" size="35">我的主页</button> 
 {{ range . }}
-<h2 style="color:slategrey">{{ .Time }}  <h2 style="color:dodgerblue">{{ .Author }}:<h2>{{ .Content}}</h2>
+<h2 style="color:slategrey">{{ .Time }}<h2 style="color:dodgerblue">{{ .Author }}:<h2>{{ .Content}}</h2>
+    {{ if .Image}}
+        <p>
+        <img src="http://192.168.0.102:8080/static/{{ .ID}}.jpeg" width="300"/>
+        </p>
+    {{end}}
     <input type="text" name="comment{{.ID}}" size="40" style="font-size:20px"><button type="submit" name="button" value={{.ID}} style="color:tomato;font-size:20px;margin-left:30px" size="25">评论</button>
     <h3>评论: </h3>
     {{ range .Comments }}

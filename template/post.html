@@ -1,43 +1,69 @@
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title></title>
-    <style>
-        textarea {
-            width: 500px;
-            height: 300px;
-        }
-    
-        div {
-            width: 250px;
-            display: inline-block;
-        }
-        .abnormal {
-            position: absolute;
-            margin-left: 0px;
-        }
-    
-        #textArea {
-            position: absolute;
-        }
-    
-        .abnormal div {
-            color: darkgrey;
-            position: absolute;
-        }
-        </style>
-</head>
-<body>
-<form action="/post/" method="post">
-<div class="abnormal">
-    <textarea id="textArea" name="content" style="font-size:30px" onfocus="document.getElementById('introTxt').style.display='none'"
-                onblur="if(value=='')document.getElementById('introTxt').style.display='inline'"></textarea>
-    <!--代码此处千万不要强迫症发作——按回车键！！！不然就会在文本框内自动保留空格-->
-    <div id="introTxt" onclick="focusTextarea()" style="font-size:30px">请输入:</div>
-</div>
-<br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-<button type="submit" name="button" value="post" style="color:peru;font-size:25px" size="30">发布</button>
-<button type="submit" name="button" value="back" style="color:peru;font-size:25px;margin-left:365px" size="30">返回</button>
-</form>
-</body>
+    <head>
+        <meta charset="UTF-8">
+            <title></title>
+            <style>
+                textarea {
+                    width: 500px;
+                    height: 300px;
+                }
+            
+                div {
+                    width: 250px;
+                    display: inline-block;
+                }
+                .abnormal {
+                    position: absolute;
+                    margin-left: 0px;
+                }
+            
+                #textArea {
+                    position: absolute;
+                }
+            
+                .abnormal div {
+                    color: darkgrey;
+                    position: absolute;
+                }
+            </style>
+    </head>
+    <body>
+        <form form id="form" action="/post" method="POST" enctype="multipart/form-data">
+            <div class="abnormal">
+                <textarea id="textArea" name="content" style="font-size:30px" onfocus="document.getElementById('introTxt').style.display='none'"
+                            onblur="if(value=='')document.getElementById('introTxt').style.display='inline'"></textarea>
+                <!--代码此处千万不要强迫症发作——按回车键！！！不然就会在文本框内自动保留空格-->
+                <div id="introTxt" onclick="focusTextarea()" style="font-size:30px">请输入:</div>
+            </div>
+            <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+            <button type="submit" name="button" value="post" style="color:peru;font-size:25px" size="30">发布</button>
+            <button type="submit" name="button" value="back" style="color:peru;font-size:25px;margin-left:50px" size="30">返回</button>
+            <input type="file" accept="image/*" name="file" id="file" style="color:peru;margin-left:30px;font-size:20px"/><br><br>
+            <div>
+                <img id="preview" width="500">
+            </div>
+        </form>
+        <script>
+            var fileDom = document.getElementById("file");
+            var previewDom = document.getElementById("preview");
+            fileDom.addEventListener("change", e=>{
+                var file = fileDom.files[0];
+                // check if input contains a valid image file
+                if (!file || file.type.indexOf("image/") < 0) {
+                    fileDom.value = "";
+                    previewDom.src = "";
+                    return;
+                }
+
+                // use FileReader to load image and show preview of the image
+                var fileReader = new FileReader();
+                fileReader.onload = e=>{
+                    previewDom.src = e.target.result;
+                };
+                fileReader.readAsDataURL(file);
+            });
+
+            var formDom = document.getElementById("form");
+        </script>
+    </body>
 </html>

@@ -43,13 +43,8 @@ func Config() ConfigArgs {
 	return confArgs
 }
 
-// Controler controle every thing
-type Controler struct {
-	HandlerMap map[string]func(w http.ResponseWriter, r *http.Request)
-}
-
 // Init all
-func Init(mux *Controler) {
+func Init(mux *http.ServeMux) {
 	confArgs := Config()
 	HostIP = confArgs.HostIP
 	HostPort = confArgs.HostPort
@@ -63,28 +58,29 @@ func Init(mux *Controler) {
 	}
 	util.InitLog()
 	db.InitDB(dsn)
-	mux.InitControler()
+	InitHandler(mux)
 }
 
-// InitControler init the controler
-func (c *Controler) InitControler() {
-	c.HandlerMap = map[string]func(w http.ResponseWriter, r *http.Request){}
-	c.HandlerMap["/"] = homePage
-	c.HandlerMap["/myhome/"] = myHomePage
-	c.HandlerMap["/post/"] = createPost
-	c.HandlerMap["/singup/"] = singUP
-	c.HandlerMap["/login/"] = login
-	c.HandlerMap["/image/"] = Image
+// InitHandler init the controler
+func InitHandler(mux *http.ServeMux) {
+	images := http.FileServer(http.Dir("/Users/duyi/Desktop/goweb/images"))
+	mux.Handle("/static/", http.StripPrefix("/static/", images))
+	mux.HandleFunc("/", homePage)
+	mux.HandleFunc("/myhome", myHomePage)
+	mux.HandleFunc("/post", createPost)
+	mux.HandleFunc("/singup", singUP)
+	mux.HandleFunc("/login", login)
+
 }
 
-func (c *Controler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if c.HandlerMap[r.URL.Path] != nil {
-		handle := c.HandlerMap[r.URL.Path]
-		handle(w, r)
-	} else {
-		notFound(w, r)
-	}
-}
+// func (c *Controler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// 	if c.HandlerMap[r.URL.Path] != nil {
+// 		handle := c.HandlerMap[r.URL.Path]
+// 		handle(w, r)
+// 	} else {
+// 		notFound(w, r)
+// 	}
+// }
 
 func singUP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
@@ -105,7 +101,7 @@ func singUP(w http.ResponseWriter, r *http.Request) {
 				user.Email = email
 				user.ID = util.MD5Code(name + pwd)
 				if user.Create() == true {
-					w.Header().Set("Location", HostAddr+"login/")
+					w.Header().Set("Location", HostAddr+"login")
 					w.WriteHeader(302)
 				} else {
 					t, err := template.ParseFiles("template/singup.html")
@@ -145,7 +141,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 				}
 				http.SetCookie(w, &cookie)
 				util.InfoLog(name + " logged in")
-				w.Header().Set("Location", HostAddr+"myhome/")
+				w.Header().Set("Location", HostAddr+"myhome")
 				w.WriteHeader(302)
 			} else {
 				t, err := template.ParseFiles("template/login.html")
@@ -153,7 +149,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 				t.Execute(w, "密码错误")
 			}
 		} else if choice == "singup" {
-			w.Header().Set("Location", HostAddr+"singup/")
+			w.Header().Set("Location", HostAddr+"singup")
 			w.WriteHeader(302)
 		}
 	}
@@ -168,7 +164,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		choice := r.PostForm.Get("button")
 		if choice == "myhome" {
-			w.Header().Set("Location", HostAddr+"myhome/")
+			w.Header().Set("Location", HostAddr+"myhome")
 			w.WriteHeader(302)
 		} else {
 			cookie := r.Cookies()
@@ -186,7 +182,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Location", HostAddr)
 				w.WriteHeader(302)
 			} else {
-				w.Header().Set("Location", HostAddr+"login/")
+				w.Header().Set("Location", HostAddr+"login")
 				w.WriteHeader(302)
 			}
 		}
@@ -204,11 +200,11 @@ func myHomePage(w http.ResponseWriter, r *http.Request) {
 				posts := db.GetPostByAuthor(user.Name)
 				t.Execute(w, posts)
 			} else {
-				w.Header().Set("Location", HostAddr+"login/")
+				w.Header().Set("Location", HostAddr+"login")
 				w.WriteHeader(302)
 			}
 		} else {
-			w.Header().Set("Location", HostAddr+"login/")
+			w.Header().Set("Location", HostAddr+"login")
 			w.WriteHeader(302)
 		}
 
@@ -216,21 +212,17 @@ func myHomePage(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		choice := r.PostForm.Get("button")
 		if choice == "create" {
-			w.Header().Set("Location", HostAddr+"post/")
+			w.Header().Set("Location", HostAddr+"post")
 			w.WriteHeader(302)
 		} else if choice == "homepage" {
 			w.Header().Set("Location", HostAddr)
 			w.WriteHeader(302)
 		} else {
 			db.DeletePost(choice)
-			w.Header().Set("Location", HostAddr+"myhome/")
+			w.Header().Set("Location", HostAddr+"myhome")
 			w.WriteHeader(302)
 		}
 	}
-}
-
-func notFound(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "404 not found")
 }
 
 func getPostByID(w http.ResponseWriter, r *http.Request) {
@@ -256,47 +248,38 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "POST" {
 		cookie := r.Cookies()
 		r.ParseForm()
+		r.ParseMultipartForm(1024 * 1024 * 10)
 		choice := r.PostForm.Get("button")
 		if choice == "post" {
 			if len(cookie) != 0 {
 				user := db.GetUserByID(cookie[0].Value)
-				content := r.PostForm.Get("content")
+				content := r.FormValue("content")
 				post := db.Post{}
 				post.Author = user.Name
 				post.Content = content
-				post.Create()
-				w.Header().Set("Location", HostAddr+"myhome/")
+				image, _, err := r.FormFile("file")
+				if err == nil {
+					post.Image = true
+					post.Create()
+					defer image.Close()
+					imageBytes, _ := ioutil.ReadAll(image)
+					path := "images/" + post.ID + ".jpeg"
+					newImage, _ := os.Create(path)
+					defer newImage.Close()
+					newImage.Write(imageBytes)
+				} else {
+					post.Image = false
+					post.Create()
+				}
+				w.Header().Set("Location", HostAddr+"myhome")
 				w.WriteHeader(302)
 			} else {
-				w.Header().Set("Location", HostAddr+"login/")
+				w.Header().Set("Location", HostAddr+"login")
 				w.WriteHeader(302)
 			}
 		} else if choice == "back" {
-			w.Header().Set("Location", HostAddr+"myhome/")
+			w.Header().Set("Location", HostAddr+"myhome")
 			w.WriteHeader(302)
 		}
-	}
-}
-
-func test(w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles("template/test.tmpl")
-	// posts := db.GetPostByAuthor("duyi")
-	// reply := postsFmt(posts)
-	reply := []string{"hello", "world"}
-	t.Execute(w, reply)
-}
-
-// Image upload photo to database
-func Image(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method == "GET" {
-		fmt.Println("get>>>")
-		t, _ := template.ParseFiles("template/test.html")
-		t.Execute(w, nil)
-	} else if r.Method == "POST" {
-		fmt.Println("post>>>")
-		r.ParseForm()
-		image := r.PostForm.Get("file")
-		fmt.Println(image)
 	}
 }
