@@ -13,7 +13,6 @@ func main() {
 		Addr:    controler.HostIP + ":" + controler.HostPort,
 		Handler: mux,
 	}
-
 	util.ColorPrintf("Service at: ", util.Green)
 	util.ColorPrintf(controler.HostAddr+"\n", util.Yellow)
 	server.ListenAndServe()
