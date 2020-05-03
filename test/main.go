@@ -1,8 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"html/template"
+	"net/http"
+)
+
+func test(w http.ResponseWriter, r *http.Request) {
+	t, _ := template.ParseFiles("template/test.html")
+	t.Execute(w, nil)
+}
 
 func main() {
-	a := "hhh"
-	fmt.Printf("%v\n", a)
+	http.HandleFunc("/", test)
+	http.ListenAndServe("localhost:8080", nil)
 }
