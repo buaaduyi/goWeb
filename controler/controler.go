@@ -63,7 +63,7 @@ func Init(mux *http.ServeMux) {
 
 // InitHandler init the controler
 func InitHandler(mux *http.ServeMux) {
-	images := http.FileServer(http.Dir("/Users/duyi/Desktop/goweb/images"))
+	images := http.FileServer(http.Dir("/home/ubuntu/goweb/images"))
 	mux.Handle("/static/", http.StripPrefix("/static/", images))
 	mux.HandleFunc("/", homePage)
 	mux.HandleFunc("/myhome", myHomePage)
@@ -263,7 +263,7 @@ func createPost(w http.ResponseWriter, r *http.Request) {
 					post.Create()
 					defer image.Close()
 					imageBytes, _ := ioutil.ReadAll(image)
-					path := "images/" + post.ID + ".jpeg"
+					path := "/home/ubuntu/goweb/images/" + post.ID + ".jpeg"
 					newImage, _ := os.Create(path)
 					defer newImage.Close()
 					newImage.Write(imageBytes)

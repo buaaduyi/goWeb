@@ -1,10 +1,10 @@
 {
-    "host_ip":"192.168.0.104",
-    "host_port":"8080",
+	    "host_ip":"49.232.70.86",
+	        "host_port":"8080",
 
-    "db_user": "root",
-    "db_pwd": "19960115",
-    "db_hostname":"localhost",
-    "db_port":"3306",
-    "db_schema":"ChitChat"
+		    "db_user": "duyi",
+		        "db_pwd": "19960115",
+			    "db_hostname":"localhost",
+			        "db_port":"3306",
+				    "db_schema":"SHEPI"
 }

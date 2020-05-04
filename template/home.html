@@ -35,7 +35,7 @@
 <h2 style="color:slategrey">{{ .Time }}<h2>{{ .Author }}:  {{ .Content}}</h2>
     {{ if .Image}}
         <p>
-        <img src="http://192.168.0.104:8080/static/{{ .ID}}.jpeg" width="800"/>
+        <img src="http://49.232.70.86:8080/static/{{ .ID}}.jpeg" width="800"/>
         </p>
     {{end}}
     <input type="text" name="comment{{.ID}}" size="40" style="font-size:25px"><button type="submit" name="button" value={{.ID}} style="color:tomato;font-size:25px;margin-left:30px" size="25">评论</button>
