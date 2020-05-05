@@ -81,7 +81,7 @@ func (post *Post) Create() {
 	if post.Image == true {
 		image = 1
 	}
-	query := fmt.Sprintf("INSERT INTO posts (id, time, content, image, author) VALUES ('%s', '%s', '%s', '%d', '%s')", post.ID, post.Time, post.Content, image, post.Author)
+	query := fmt.Sprintf("INSERT INTO posts (post_id, time, content, image, author) VALUES ('%s', '%s', '%s', '%d', '%s')", post.ID, post.Time, post.Content, image, post.Author)
 	_, err := db.Exec(query)
 	if util.CheckErr(err) == true {
 		util.InfoLog("New post: " + post.ID)
@@ -91,14 +91,14 @@ func (post *Post) Create() {
 // DeletePost by id
 func DeletePost(id string) {
 	var imageFlag bool
-	query := fmt.Sprintf("SELECT image from posts WHERE id='%s'", id)
+	query := fmt.Sprintf("SELECT image from posts WHERE post_id='%s'", id)
 	db.QueryRow(query).Scan(&imageFlag)
 	if imageFlag == true {
 		path := "images/" + id + ".jpeg"
 		err := os.Remove(path)
 		util.ErrorLog(err)
 	}
-	query = fmt.Sprintf("DELETE FROM posts WHERE id='%s'", id)
+	query = fmt.Sprintf("DELETE FROM posts WHERE post_id='%s'", id)
 	_, err := db.Exec(query)
 	util.CheckErr(err)
 	DeleteCommentByPostID(id)
@@ -110,14 +110,14 @@ func DeletePost(id string) {
 func (comment *Comment) Create() {
 	comment.Time = time.Now().Format("2006-01-02 15:04:05")
 	comment.ID = util.MD5Code(comment.Content + comment.Author + comment.Time)
-	query := fmt.Sprintf("INSERT INTO comments (id, time, content, author, post_id) VALUES ('%s', '%s','%s', '%s', '%s')", comment.ID, comment.Time, comment.Content, comment.Author, comment.PostID)
+	query := fmt.Sprintf("INSERT INTO comments (comment_id, time, content, author, post_id) VALUES ('%s', '%s','%s', '%s', '%s')", comment.ID, comment.Time, comment.Content, comment.Author, comment.PostID)
 	_, err := db.Exec(query)
 	util.CheckErr(err)
 }
 
 //DeleteComment by id
 func DeleteComment(id string) {
-	query := fmt.Sprintf("DELETE FROM comments WHERE id='%s'", id)
+	query := fmt.Sprintf("DELETE FROM comments WHERE comment_id='%s'", id)
 	_, err := db.Exec(query)
 	util.CheckErr(err)
 }
@@ -132,7 +132,7 @@ func DeleteCommentByPostID(postID string) {
 // GetAllPosts get all posts
 func GetAllPosts() []Post {
 	posts := []Post{}
-	query := fmt.Sprintf("SELECT id, time, content, image, author from posts ORDER BY time DESC")
+	query := fmt.Sprintf("SELECT post_id, time, content, image, author from posts ORDER BY time DESC")
 	postRows, err := db.Query(query)
 	defer postRows.Close()
 	util.CheckErr(err)
@@ -140,7 +140,7 @@ func GetAllPosts() []Post {
 		post := Post{}
 		post.Comments = []Comment{}
 		postRows.Scan(&post.ID, &post.Time, &post.Content, &post.Image, &post.Author)
-		query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
+		query = fmt.Sprintf("SELECT comment_id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
 		commentRows, err := db.Query(query)
 		defer commentRows.Close()
 		util.CheckErr(err)
@@ -158,9 +158,9 @@ func GetAllPosts() []Post {
 func GetPostByID(id string) Post {
 	post := Post{}
 	post.Comments = []Comment{}
-	query := fmt.Sprintf("SELECT id, time, content, image,  author from posts where id='%s'", id)
+	query := fmt.Sprintf("SELECT post_id, time, content, image,  author from posts where id='%s'", id)
 	db.QueryRow(query).Scan(&post.ID, &post.Time, &post.Content, &post.Image, &post.Author)
-	query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s'", id)
+	query = fmt.Sprintf("SELECT comment_id, time, content, author from comments where post_id='%s'", id)
 	rows, err := db.Query(query)
 	util.CheckErr(err)
 	defer rows.Close()
@@ -175,7 +175,7 @@ func GetPostByID(id string) Post {
 // GetPostByAuthor get post from database
 func GetPostByAuthor(author string) []Post {
 	posts := []Post{}
-	query := fmt.Sprintf("SELECT id, time, content, image, author from posts where author='%s' ORDER BY time DESC", author)
+	query := fmt.Sprintf("SELECT post_id, time, content, image, author from posts where author='%s' ORDER BY time DESC", author)
 	postRows, err := db.Query(query)
 	defer postRows.Close()
 	util.CheckErr(err)
@@ -183,7 +183,7 @@ func GetPostByAuthor(author string) []Post {
 		post := Post{}
 		post.Comments = []Comment{}
 		postRows.Scan(&post.ID, &post.Time, &post.Content, &post.Image, &post.Author)
-		query = fmt.Sprintf("SELECT id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
+		query = fmt.Sprintf("SELECT comment_id, time, content, author from comments where post_id='%s' ORDER BY time", post.ID)
 		commentRows, err := db.Query(query)
 		defer commentRows.Close()
 		util.CheckErr(err)
